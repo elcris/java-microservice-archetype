@@ -1,0 +1,38 @@
+name: Verify microservice
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        storage: [memory, postgresql, dynamodb]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Verify selected storage
+        env:
+          STORAGE: ${{ matrix.storage }}
+        run: |
+          if [ "$STORAGE" = memory ]; then
+            sh mvnw -B -ntp -Dstorage="$STORAGE" clean verify
+          else
+            sh mvnw -B -ntp -Dstorage="$STORAGE" -Pdatabase-it clean verify
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports-${{ matrix.storage }}
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/

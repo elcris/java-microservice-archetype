@@ -1,0 +1,189 @@
+openapi: 3.1.1
+info:
+  title: Technical Entry Example API
+  version: 1.0.0
+  description: |
+    Ejemplo técnico sin semántica bancaria, datos personales ni asignación BIAN.
+    Contrato disponible en el perfil demo local. Fuera de demo las operaciones
+    se deniegan hasta integrar autenticación y autorización corporativa.
+    Un Entry es inmutable: PUT crea o repite la misma representación; contenido
+    diferente para el mismo id devuelve 409. No hay actualización ni eliminación.
+servers:
+  - url: /
+    description: Instancia actual
+tags:
+  - name: Entries
+    description: Recursos técnicos de demostración, no modelo canónico bancario.
+security: []
+x-security-scope: local-demo-only
+x-bian-provenance: not-applicable-technical-example
+paths:
+  /api/v1/entries/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntryId'
+      - $ref: '#/components/parameters/CorrelationId'
+    put:
+      operationId: createEntry
+      tags: [Entries]
+      summary: Crear o repetir un recurso inmutable
+      description: |
+        El cliente proporciona un UUID. La primera escritura devuelve 201 y Location.
+        Una repetición con el mismo name devuelve 200, mismo id y createdAt.
+        Un name diferente devuelve 409. La atomicidad se garantiza por identificador
+        dentro de la instancia memory, la tabla PostgreSQL o la tabla DynamoDB.
+        Memory pierde los recursos al reiniciar y no coordina réplicas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntryRequest'
+            example:
+              name: technical-example
+      responses:
+        '201':
+          description: Recurso creado
+          headers:
+            Location:
+              description: URI relativa del recurso creado
+              schema: {type: string, format: uri-reference}
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '200':
+          description: Repetición idempotente, recurso existente sin cambios
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '415': {$ref: '#/components/responses/UnsupportedMediaType'}
+        '422': {$ref: '#/components/responses/InvalidEntry'}
+        '500': {$ref: '#/components/responses/InternalError'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+    get:
+      operationId: getEntry
+      tags: [Entries]
+      summary: Consultar un recurso
+      description: Devuelve el recurso por UUID; 404 indica que no existe.
+      responses:
+        '200':
+          description: Recurso encontrado
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '500': {$ref: '#/components/responses/InternalError'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+components:
+  securitySchemes: {}
+  parameters:
+    EntryId:
+      name: id
+      in: path
+      required: true
+      description: UUID técnico aportado por el cliente; no identificador bancario.
+      schema: {type: string, format: uuid}
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      description: Se propaga si cumple el patrón; si no, el servidor genera uno nuevo.
+      schema: {type: string, pattern: '^[A-Za-z0-9-]{1,64}$'}
+  headers:
+    CorrelationId:
+      description: Identificador de correlación de la solicitud
+      schema: {type: string, pattern: '^[A-Za-z0-9-]{1,64}$'}
+  schemas:
+    CreateEntryRequest:
+      type: object
+      required: [name]
+      description: Se ignoran propiedades desconocidas para permitir evolución compatible.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: '.*\S.*'
+          description: Texto técnico no vacío. No incluir datos personales.
+    Entry:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 120}
+        createdAt: {type: string, format: date-time, description: Instante UTC generado por el servidor}
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: {type: string, format: uri}
+        title: {type: string}
+        status: {type: integer, minimum: 400, maximum: 599}
+        detail: {type: string}
+        instance: {type: string, format: uri-reference}
+        code: {type: string}
+        correlationId: {type: [string, 'null']}
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: {type: string}
+              message: {type: string}
+  responses:
+    BadRequest:
+      description: JSON, UUID o validación inválida
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Forbidden:
+      description: Acceso cerrado fuera del perfil demo
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    NotFound:
+      description: Recurso inexistente
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Conflict:
+      description: El identificador ya contiene otra representación
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    UnsupportedMediaType:
+      description: Se requiere application/json
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    InvalidEntry:
+      description: Invariante del recurso inválida
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    InternalError:
+      description: Error interno sin detalles sensibles
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Unavailable:
+      description: Dependencia de almacenamiento no disponible
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}

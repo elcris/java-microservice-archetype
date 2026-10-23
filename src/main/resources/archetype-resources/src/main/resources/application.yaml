@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: '@project.artifactId@'
+  config:
+    import: 'classpath:application-@storage@.yaml'
+  main:
+    banner-mode: 'off'
+  mvc:
+    problemdetails:
+      enabled: true
+  autoconfigure:
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+app:
+  storage: '@storage@'
+logging:
+  structured:
+    format:
+      console: ecs
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+springdoc:
+  enable-default-api-docs: false
+  api-docs:
+    enabled: true
+  swagger-ui:
+    url: /openapi.yaml
+    disable-swagger-default-url: true

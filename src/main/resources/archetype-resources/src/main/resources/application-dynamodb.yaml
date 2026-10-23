@@ -1,0 +1,4 @@
+app:
+  dynamodb:
+    table: ${DYNAMODB_TABLE}
+    region: ${AWS_REGION}

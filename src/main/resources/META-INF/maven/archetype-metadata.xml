@@ -1,0 +1,24 @@
+<archetype-descriptor xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.2.0" name="java-microservice-archetype">
+  <requiredProperties>
+    <requiredProperty key="groupId"><validationRegex>[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+</validationRegex></requiredProperty>
+    <requiredProperty key="artifactId"><validationRegex>[a-z][a-z0-9-]*</validationRegex></requiredProperty>
+    <requiredProperty key="package"><validationRegex>[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+</validationRegex></requiredProperty>
+    <requiredProperty key="version"><defaultValue>0.1.0-SNAPSHOT</defaultValue><validationRegex>[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?</validationRegex></requiredProperty>
+    <requiredProperty key="persistence"><defaultValue>memory</defaultValue><validationRegex>memory|postgresql|dynamodb</validationRegex></requiredProperty>
+  </requiredProperties>
+  <fileSets><fileSet filtered="true" packaged="true"><directory>src/main/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true" packaged="true"><directory>src/test/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true" packaged="true"><directory>src/postgresql/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true" packaged="true"><directory>src/postgresql-test/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true" packaged="true"><directory>src/postgresql-it/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true" packaged="true"><directory>src/dynamodb/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true" packaged="true"><directory>src/dynamodb-test/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true" packaged="true"><directory>src/dynamodb-it/java</directory><includes><include>**/*.java</include></includes></fileSet>
+<fileSet filtered="true"><directory></directory><includes><include>pom.xml</include><include>README.md</include></includes></fileSet>
+<fileSet filtered="true"><directory>.mvn</directory><includes><include>maven.config</include></includes></fileSet>
+<fileSet filtered="false"><directory></directory><includes><include>mvnw</include><include>mvnw.cmd</include><include>.gitignore</include><include>.gitattributes</include><include>.dockerignore</include><include>Dockerfile</include><include>AGENTS.md</include></includes></fileSet>
+<fileSet filtered="false"><directory>.mvn/wrapper</directory><includes><include>**/*</include></includes></fileSet>
+<fileSet filtered="false"><directory>src/main/resources</directory><includes><include>**/*</include></includes></fileSet>
+<fileSet filtered="false"><directory>.github</directory><includes><include>**/*</include></includes></fileSet>
+<fileSet filtered="false"><directory>docs</directory><includes><include>**/*</include></includes></fileSet></fileSets>
+</archetype-descriptor>
